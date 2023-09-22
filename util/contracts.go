@@ -30,3 +30,15 @@ func GetWeth(address string, client *ethclient.Client) (*contracts.Weth, error) 
 func GetUniswapSwap(address string, client *ethclient.Client) (*contracts.UniswapPair, error) {
 	return contracts.NewUniswapPair(common.HexToAddress(address), client)
 }
+
+func GetUniV3SwapRouter(address string, client *ethclient.Client) (*contracts.UniswapV3SwapRouter, error) {
+	return contracts.NewUniswapV3SwapRouter(common.HexToAddress(address), client)
+}
+
+func GetUniV3Quoter(address string, client *ethclient.Client) (*contracts.UniswapV3Quoter, error) {
+	return contracts.NewUniswapV3Quoter(common.HexToAddress(address), client)
+}
+
+func GetUniV3QuoterV2(address string, client *ethclient.Client) (*contracts.UniswapV3QuoterV2, error) {
+	return contracts.NewUniswapV3QuoterV2(common.HexToAddress(address), client)
+}

@@ -53,7 +53,14 @@ func GetCallTraces(tx *types.Transaction) (*types2.CallTraceResponse, error) {
 	}
 	defer resp.Body.Close()
 
-	// Parse the JSON response
+	//// print out the resp body in string
+	//buf := new(bytes.Buffer)
+	//buf.ReadFrom(resp.Body)
+	//fmt.Printf("resp body is %v\n", buf.String())
+	//
+	//return nil, fmt.Errorf("Printing as string")
+
+	//// Parse the JSON response
 	var jsonResponse types2.CallTraceResponse
 	err = json.NewDecoder(resp.Body).Decode(&jsonResponse)
 	if err != nil {
@@ -63,6 +70,31 @@ func GetCallTraces(tx *types.Transaction) (*types2.CallTraceResponse, error) {
 
 	// Print the response
 	return &jsonResponse, nil
+}
+
+// just check if it goes to the DaiWethPair with a swap tx
+func IsTxUniv3EthUsdcSwap(trace *types2.CallTrace) (bool, error) {
+	stack := []types2.CallTrace{*trace}
+
+	for len(stack) > 0 {
+		current := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		res, err := IsTraceUniV3EthUsdcSwap(current)
+		if err != nil {
+			return false, err
+		}
+		// we found a weth/dai swap i.e the tx contains a weth/dai swap
+		if res {
+			return true, nil
+		}
+
+		for _, call := range current.Calls {
+			stack = append(stack, call)
+		}
+	}
+
+	return false, nil
 }
 
 // just check if it goes to the DaiWethPair with a swap tx
@@ -90,15 +122,14 @@ func IsTxWEthDaiSwap(trace *types2.CallTrace) (bool, error) {
 	return false, nil
 }
 
-func GetMethodArgs(tx *types.Transaction, method string, contractAbi *abi.ABI) (map[string]interface{}, error) {
-	res := contractAbi.Methods[method]
-	argsMap := make(map[string]interface{})
-	err := res.Inputs.UnpackIntoMap(argsMap, tx.Data()[4:])
+func GetInterfaceMethodArgs(data []byte, method string, contractAbi *abi.ABI) ([]interface{}, error) {
+	abiMethod := contractAbi.Methods[method]
+	res, err := abiMethod.Inputs.Unpack(data[4:])
 	if err != nil {
 		return nil, err
 	}
 
-	return argsMap, nil
+	return res, nil
 }
 
 // This will change based on the state interference check
@@ -129,6 +160,82 @@ func IsTraceToWEthDaiPair(callTrace types2.CallTrace) (bool, error) {
 	if !bytes.Equal(callTrace.Input[:4], swapId) {
 		return false, nil
 	}
+
+	return true, nil
+}
+
+func GetMethodArgs(data []byte, method string, contractAbi *abi.ABI) (interface{}, error) {
+	abiMethod := contractAbi.Methods[method]
+	res, err := abiMethod.Inputs.Unpack(data[4:])
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func GetOutputMethodArgs(data []byte, method string, contractAbi *abi.ABI) (interface{}, error) {
+	abiMethod := contractAbi.Methods[method]
+	res, err := abiMethod.Outputs.Unpack(data[4:])
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// This will change based on the state interference check
+func IsTraceUniV3EthUsdcSwap(callTrace types2.CallTrace) (bool, error) {
+	if callTrace.To == nil {
+		return false, nil
+	}
+	if callTrace.Type == "STATICCALL" {
+		return false, nil
+	}
+	if len(callTrace.Input) < 4 {
+		return false, nil
+	}
+
+	if *callTrace.To != constants.UniV3SwapRouter {
+		return false, nil
+	}
+
+	uniV3SwapRouterAbi, err := contracts.UniswapV3SwapRouterMetaData.GetAbi()
+	if err != nil {
+		return false, err
+	}
+	exactInputSingleId := uniV3SwapRouterAbi.Methods["exactInputSingle"].ID
+	if !bytes.Equal(callTrace.Input[:4], exactInputSingleId) {
+		return false, nil
+	}
+
+	// unpack the args
+	args, err := GetInterfaceMethodArgs(callTrace.Input, "exactInputSingle", uniV3SwapRouterAbi)
+	if err != nil {
+		return false, err
+	}
+	firstEle := args[0]
+	fmt.Printf("args are %v\n", args[0])
+	firstEleBytes, err := json.Marshal(firstEle)
+	fmt.Printf("firstEleBytes are %v\n", string(firstEleBytes))
+	exactInputSingleParams := new(contracts.ISwapRouterExactInputSingleParams)
+	err = json.Unmarshal(firstEleBytes, exactInputSingleParams)
+	if err != nil {
+		return false, err
+	}
+	fmt.Printf("exactInputSingleParams are %v\n", exactInputSingleParams.AmountIn)
+	//swapRouterParams, ok := firstEle.(contracts.ISwapRouterExactInputSingleParams)
+	//if !ok {
+	//	return false, fmt.Errorf("failed to parse args of swapRouter tx to ISwapRouterExactInputSingleParams")
+	//}
+	//fmt.Printf("swapRouterParams are %v\n", swapRouterParams)
+	return false, nil
+	//if swapRouterParams.TokenIn != constants.WethGoerliAddress || swapRouterParams.TokenOut != constants.UsdcAddress {
+	//	return false, nil
+	//}
+	//if swapRouterParams.TokenOut != constants.UsdcAddress || swapRouterParams.TokenOut != constants.WethGoerliAddress {
+	//	return false, nil
+	//}
 
 	return true, nil
 }
