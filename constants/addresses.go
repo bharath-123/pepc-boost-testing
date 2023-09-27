@@ -4,6 +4,7 @@ import "github.com/ethereum/go-ethereum/common"
 
 var (
 	// addresses from kurtosis devnet
+	// addresses from kurtosis devnet
 	DaiAddress        = common.HexToAddress("0xAb2A01BC351770D09611Ac80f1DE076D56E0487d")
 	WethAddress       = common.HexToAddress("0x4c849Ff66a6F0A954cbf7818b8a763105C2787D6")
 	WethGoerliAddress = common.HexToAddress("0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6")
@@ -14,6 +15,6 @@ var (
 	UniV3Quoter       = common.HexToAddress("0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6")
 	UsdcAddress       = common.HexToAddress("0x9B2660A7BEcd0Bf3d90401D1C214d2CD36317da5")
 	EcUrl             = "<Your EC Url>"
-	MevRelayerUrl     = "13.127.243.252:35764"
-	BuilderUrl        = "13.127.243.252:35746"
+	MevRelayerUrl     = "43.205.196.81:9062"
+	BuilderUrl        = "3.110.156.213:8545"
 )

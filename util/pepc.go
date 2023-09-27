@@ -128,6 +128,14 @@ func GetCurrentProposerFeeRecipient(mevRelayUrl string, slot uint64) (string, er
 		fmt.Println("Request failed with status code:", resp.StatusCode)
 	}
 
+	//body, err := ioutil.ReadAll(resp.Body)
+	//if err != nil {
+	//	fmt.Println("Error reading response body:", err)
+	//	return "", err
+	//}
+	//fmt.Println(string(body))
+	//return "", err
+
 	var feeRecipient string
 	err = json.NewDecoder(resp.Body).Decode(&feeRecipient)
 	if err != nil {
