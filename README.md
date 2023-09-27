@@ -12,3 +12,6 @@ Then run the following command to send ToB txs to the PEPC-Boost relay
 ```bash
 go run main.go
 ```
+
+To inspect the block post submitting a ToB tx, you can uncomment the block inspection code and comment out the ToB tx submission code. Once that is run, you can run the code similar 
+to submitting a ToB tx.
