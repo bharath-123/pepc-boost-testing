@@ -15,5 +15,4 @@ var (
 	UsdcAddress       = common.HexToAddress("0x9B2660A7BEcd0Bf3d90401D1C214d2CD36317da5")
 	EcUrl             = "<Your EC Url>"
 	MevRelayerUrl     = "13.127.243.252:35797"
-	BuilderUrl        = "13.127.243.252:35781"
 )

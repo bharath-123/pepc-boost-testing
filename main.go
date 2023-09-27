@@ -21,7 +21,7 @@ import (
 )
 
 func TransferAndApproveWeth() {
-	ecRpcUrl := fmt.Sprintf("http://%s", constants.BuilderUrl)
+	ecRpcUrl := fmt.Sprintf("http://%s", constants.EcUrl)
 	fmt.Println("1. Creating EC client")
 	client, err := ethclient.Dial(ecRpcUrl)
 	if err != nil {
@@ -131,7 +131,7 @@ func main() {
 	/*
 		Prepare the EC client
 	*/
-	ecRpcUrl := fmt.Sprintf("http://%s", constants.BuilderUrl)
+	ecRpcUrl := fmt.Sprintf("http://%s", constants.EcUrl)
 	client, err := ethclient.Dial(ecRpcUrl)
 	if err != nil {
 		log.Fatal(err)
@@ -272,7 +272,7 @@ func main() {
 	//======
 	//Block inspection, use the below code to inspect your block hash txs to check if your expected txs are built on the top of the block
 	//======
-	//ecRpcUrl := fmt.Sprintf("http://%s", constants.BuilderUrl)
+	//ecRpcUrl := fmt.Sprintf("http://%s", constants.EcUrl)
 	//fmt.Println("1. Creating EC client")
 	//client, err := ethclient.Dial(ecRpcUrl)
 	//if err != nil {
