@@ -80,7 +80,7 @@ func GetCurrentBlock(mevRelayUrl string, slot uint64) (string, error) {
 		fmt.Println("Request failed with status code:", resp.StatusCode)
 	}
 
-	// print body as string
+	//print body as string
 	//body, err := ioutil.ReadAll(resp.Body)
 	//if err != nil {
 	//	fmt.Println("Error reading response body:", err)
@@ -127,6 +127,16 @@ func GetCurrentProposerFeeRecipient(mevRelayUrl string, slot uint64) (string, er
 	} else {
 		fmt.Println("Request failed with status code:", resp.StatusCode)
 	}
+
+	////print body as string
+	//body, err := ioutil.ReadAll(resp.Body)
+	//if err != nil {
+	//	fmt.Println("Error reading response body:", err)
+	//	return "", err
+	//}
+	//fmt.Println(string(body))
+	//
+	//return "nil", fmt.Errorf("not implemented")
 
 	var feeRecipient string
 	err = json.NewDecoder(resp.Body).Decode(&feeRecipient)
