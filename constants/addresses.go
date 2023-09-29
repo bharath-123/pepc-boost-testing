@@ -15,6 +15,6 @@ var (
 	UniV3Quoter       = common.HexToAddress("0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6")
 	UsdcAddress       = common.HexToAddress("0x9B2660A7BEcd0Bf3d90401D1C214d2CD36317da5")
 	EcUrl             = "<Your EC Url>"
-	MevRelayerUrl     = "43.205.196.81:9062"
-	BuilderUrl        = "3.110.156.213:8545"
+	MevRelayerUrl     = "43.205.216.100:9062"
+	BuilderUrl        = "15.206.157.162:8545"
 )

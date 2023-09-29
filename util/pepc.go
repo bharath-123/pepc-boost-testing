@@ -26,7 +26,6 @@ func GetCurrentSlot(mevRelayUrl string) (*big.Int, error) {
 	httpClient := &http.Client{}
 
 	// Send the request
-	fmt.Printf("Sending request")
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		fmt.Println("Error sending request:", err)
@@ -36,7 +35,6 @@ func GetCurrentSlot(mevRelayUrl string) (*big.Int, error) {
 
 	// Check the response status code
 	if resp.StatusCode == http.StatusOK {
-		fmt.Println("Request was successful")
 	} else {
 		fmt.Println("Request failed with status code:", resp.StatusCode)
 	}
