@@ -22,7 +22,7 @@ func main() {
 		time.Sleep(12 * time.Second)
 
 		fmt.Println("2. Creating private key")
-		privateKey, err := crypto.HexToECDSA("3c3abd261880e45821b41a3b987ca43280b75bd05ac54d67c16e897098cb4f64")
+		privateKey, err := crypto.HexToECDSA("<your private key>")
 		if err != nil {
 			log.Print(err)
 			continue
@@ -86,7 +86,7 @@ func main() {
 		// Create a new Ethereum transaction
 		fmt.Printf("8. Creating the txs")
 		//tobTx := types.NewTransaction(nonce, toAddress, value, gasLimit, gasPrice, nil)
-		builderPayout := types.NewTransaction(nonce, common.HexToAddress("0x77830EEF26f9d6960a4614e55dC22f70542F8f00"), value, gasLimit, gasPrice, nil)
+		builderPayout := types.NewTransaction(nonce, common.HexToAddress("<Builder coinbase address>"), value, gasLimit, gasPrice, nil)
 
 		fmt.Println("9. get local chain id")
 		localChainId, err := client.ChainID(context.Background())
