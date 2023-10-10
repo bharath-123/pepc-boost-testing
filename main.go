@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"math/big"
 	"net/http"
@@ -296,7 +297,14 @@ func main() {
 			fmt.Printf("Relayer payout hash is %s\n", signedProposerPayout.Hash().String())
 		} else {
 			fmt.Println("Request failed with status code:", resp.StatusCode)
-			fmt.Printf("")
+			// read the body
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				fmt.Println("Error reading response body:", err)
+				continue
+			}
+			fmt.Printf("Request failed with error message: %s\n", string(body))
+
 		}
 	}
 }
