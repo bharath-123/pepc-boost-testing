@@ -226,7 +226,7 @@ func main() {
 		gasLimit := uint64(21000) // You may need to adjust this depending on the type of transaction
 
 		// Specify the amount to send (in Wei)
-		value := big.NewInt(1000000000000000000) // 0.1 ETH
+		value := big.NewInt(100000000000000000) // 0.1 ETH
 
 		// Create a new Ethereum transaction
 		fmt.Printf("8. Creating the txs")
