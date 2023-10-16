@@ -91,7 +91,6 @@ func TransferWeth() {
 func main() {
 	//TransferWeth()
 
-	prevSlot := big.NewInt(0)
 	for {
 		// sleep for 1 slot
 		time.Sleep(12 * time.Second)
@@ -103,11 +102,6 @@ func main() {
 			continue
 		}
 		fmt.Printf("Current slot: %v\n", currentSlot)
-		if currentSlot.Cmp(prevSlot) <= 0 {
-			fmt.Printf("Current slot is less than or equal to previous slot: %v\n", prevSlot)
-			continue
-		}
-		prevSlot = currentSlot
 
 		fmt.Printf("Fetching the parent hash for the next slot from the relayer\n")
 		slotParentHash, err := util.GetCurrentBlock(fmt.Sprintf("http://%s/eth/v1/relay/get_parent_hash_for_slot", constants.MevRelayerUrl), currentSlot.Uint64()+1)
@@ -126,7 +120,7 @@ func main() {
 		fmt.Println("proposer fee recipient: ", proposerFeeRecipient)
 
 		fmt.Println("2. Creating private key")
-		privateKey, err := crypto.HexToECDSA("cc877501b98c7171da436b1f1b6081941495795af765b5341e32558acd34e722")
+		privateKey, err := crypto.HexToECDSA("765403cdc494f607dc470a2877951a5920ad161430b2f52c4a4b71c6a2c08527")
 		if err != nil {
 			log.Fatal(err)
 			continue
@@ -184,9 +178,32 @@ func main() {
 		fmt.Printf("Creating swap tx\n")
 		transactor.NoSend = true
 		fmt.Printf("Creating swap tx.....\n")
-		swapTx, err := uniV3SwapRouter.ExactInputSingle(transactor, contracts.ISwapRouterExactInputSingleParams{
+		swapTx1, err := uniV3SwapRouter.ExactInputSingle(transactor, contracts.ISwapRouterExactInputSingleParams{
 			TokenIn:           constants.WethGoerliAddress,
 			TokenOut:          constants.UsdcAddress,
+			Fee:               big.NewInt(3000),
+			Recipient:         sender,
+			Deadline:          big.NewInt(time.Now().Unix() + 1200),
+			AmountIn:          big.NewInt(1),
+			AmountOutMinimum:  big.NewInt(0),
+			SqrtPriceLimitX96: big.NewInt(0),
+		})
+		transactor.Nonce = big.NewInt(0).Add(big.NewInt(int64(nonce)), big.NewInt(1))
+		swapTx2, err := uniV3SwapRouter.ExactInputSingle(transactor, contracts.ISwapRouterExactInputSingleParams{
+			TokenIn:           constants.WethGoerliAddress,
+			TokenOut:          constants.WBtcGoerliAddress,
+			Fee:               big.NewInt(3000),
+			Recipient:         sender,
+			Deadline:          big.NewInt(time.Now().Unix() + 1200),
+			AmountIn:          big.NewInt(1),
+			AmountOutMinimum:  big.NewInt(0),
+			SqrtPriceLimitX96: big.NewInt(0),
+		})
+
+		transactor.Nonce = big.NewInt(0).Add(big.NewInt(int64(nonce)), big.NewInt(2))
+		swapTx3, err := uniV3SwapRouter.ExactInputSingle(transactor, contracts.ISwapRouterExactInputSingleParams{
+			TokenIn:           constants.WethGoerliAddress,
+			TokenOut:          constants.DaiAddress,
 			Fee:               big.NewInt(3000),
 			Recipient:         sender,
 			Deadline:          big.NewInt(time.Now().Unix() + 1200),
@@ -199,7 +216,9 @@ func main() {
 			log.Fatal(err)
 			continue
 		}
-		fmt.Printf("Created tx!!\n", swapTx.Hash())
+		fmt.Printf("Created Eth/Usdc tx!!\n", swapTx1.Hash())
+		fmt.Printf("Created Eth/WBtc tx!!\n", swapTx2.Hash())
+		fmt.Printf("Created Eth/Dai tx!!\n", swapTx3.Hash())
 
 		// Replace with the recipient's address
 		fmt.Println("5. Creating relayer instance")
@@ -213,7 +232,9 @@ func main() {
 		fmt.Printf("proposer fee recipient address balance: %v\n", proposerFeeRecipientBalance)
 
 		fmt.Printf("Nonce: %d\n", nonce)
-		fmt.Printf("Swap tx nonce is: %d\n", swapTx.Nonce())
+		fmt.Printf("Eth/Usdc Swap tx nonce is: %d\n", swapTx1.Nonce())
+		fmt.Printf("Eth/WBtc Swap tx nonce is: %d\n", swapTx2.Nonce())
+		fmt.Printf("Eth/Dai Swap tx nonce is: %d\n", swapTx3.Nonce())
 
 		// Set the gas price and gas limit
 		fmt.Println("7. Setting gas price and gas limit")
@@ -231,7 +252,7 @@ func main() {
 		// Create a new Ethereum transaction
 		fmt.Printf("8. Creating the txs")
 		//tobTx := types.NewTransaction(nonce, toAddress, value, gasLimit, gasPrice, nil)
-		proposerPayout := types.NewTransaction(swapTx.Nonce()+1, proposerFeeRecipientAddress, value, gasLimit, gasPrice, nil)
+		proposerPayout := types.NewTransaction(swapTx3.Nonce()+1, proposerFeeRecipientAddress, value, gasLimit, gasPrice, nil)
 
 		fmt.Println("9. get local chain id")
 		localChainId, err := client.ChainID(context.Background())
@@ -247,12 +268,22 @@ func main() {
 			log.Fatal(err)
 			continue
 		}
-		binaryTx1, err := swapTx.MarshalBinary()
+		binaryTx1, err := swapTx1.MarshalBinary()
 		if err != nil {
 			log.Fatal(err)
 			continue
 		}
-		binaryTx2, err := signedProposerPayout.MarshalBinary()
+		binaryTx2, err := swapTx2.MarshalBinary()
+		if err != nil {
+			log.Fatal(err)
+			continue
+		}
+		binaryTx3, err := swapTx3.MarshalBinary()
+		if err != nil {
+			log.Fatal(err)
+			continue
+		}
+		binaryTx4, err := signedProposerPayout.MarshalBinary()
 		if err != nil {
 			log.Fatal(err)
 			continue
@@ -260,7 +291,7 @@ func main() {
 
 		tobTxs := new(types2.TobTxsSubmitRequest)
 		tobTxs.TobTxs = utilbellatrix.ExecutionPayloadTransactions{
-			Transactions: []bellatrix.Transaction{binaryTx1, binaryTx2},
+			Transactions: []bellatrix.Transaction{binaryTx1, binaryTx2, binaryTx3, binaryTx4},
 		}
 		tobTxs.Slot = currentSlot.Uint64() + 1
 		tobTxs.ParentHash = slotParentHash
@@ -293,7 +324,9 @@ func main() {
 		// Check the response status code
 		if resp.StatusCode == http.StatusOK {
 			fmt.Printf("Tob Txs successfully submitted for slot: %d and parentHash: %s\n", tobTxs.Slot, tobTxs.ParentHash)
-			fmt.Printf("ToB tx hash is %s\n", swapTx.Hash().String())
+			fmt.Printf("First ToB tx hash is %s\n", swapTx1.Hash().String())
+			fmt.Printf("Second ToB tx hash is %s\n", swapTx2.Hash().String())
+			fmt.Printf("Third ToB tx hash is %s\n", swapTx3.Hash().String())
 			fmt.Printf("Relayer payout hash is %s\n", signedProposerPayout.Hash().String())
 		} else {
 			fmt.Println("Request failed with status code:", resp.StatusCode)
