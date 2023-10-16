@@ -120,7 +120,7 @@ func main() {
 		fmt.Println("proposer fee recipient: ", proposerFeeRecipient)
 
 		fmt.Println("2. Creating private key")
-		privateKey, err := crypto.HexToECDSA("765403cdc494f607dc470a2877951a5920ad161430b2f52c4a4b71c6a2c08527")
+		privateKey, err := crypto.HexToECDSA("<Private key>")
 		if err != nil {
 			log.Fatal(err)
 			continue
