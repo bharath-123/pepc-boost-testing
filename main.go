@@ -1,16 +1,24 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"math/big"
+	"net/http"
 	"pepc-tester/constants"
 	"pepc-tester/contracts"
+	types2 "pepc-tester/types"
 	"pepc-tester/util"
 	"time"
 
+	"github.com/attestantio/go-eth2-client/spec/bellatrix"
+	utilbellatrix "github.com/attestantio/go-eth2-client/util/bellatrix"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
@@ -86,29 +94,29 @@ func main() {
 	for {
 		// sleep for 1 slot
 
-		//fmt.Printf("Fetching the current slot from the relayer\n")
-		//currentSlot, err := util.GetCurrentSlot(fmt.Sprintf("http://%s/eth/v1/relay/get_head_slot", constants.MevRelayerUrl))
-		//if err != nil {
-		//	fmt.Printf("Error fetching head slot from relayer: %v", err)
-		//	continue
-		//}
-		//fmt.Printf("Current slot: %v\n", currentSlot)
-		//
-		//fmt.Printf("Fetching the parent hash for the next slot from the relayer\n")
-		//slotParentHash, err := util.GetCurrentBlock(fmt.Sprintf("http://%s/eth/v1/relay/get_parent_hash_for_slot", constants.MevRelayerUrl), currentSlot.Uint64()+1)
-		//if err != nil {
-		//	fmt.Printf("Error fetching parent hash for slot relayer: %v", err)
-		//	continue
-		//}
-		//fmt.Println("Parent hash: ", slotParentHash)
-		//
-		//fmt.Printf("Fetching the fee recipient of the proposer the next slot from the relayer\n")
-		//proposerFeeRecipient, err := util.GetCurrentProposerFeeRecipient(fmt.Sprintf("http://%s/eth/v1/relay/get_proposer_for_slot", constants.MevRelayerUrl), currentSlot.Uint64()+1)
-		//if err != nil {
-		//	fmt.Printf("Error fetching parent hash for slot relayer: %v", err)
-		//	continue
-		//}
-		//fmt.Println("proposer fee recipient: ", proposerFeeRecipient)
+		fmt.Printf("Fetching the current slot from the relayer\n")
+		currentSlot, err := util.GetCurrentSlot(fmt.Sprintf("http://%s/eth/v1/relay/get_head_slot", constants.MevRelayerUrl))
+		if err != nil {
+			fmt.Printf("Error fetching head slot from relayer: %v", err)
+			continue
+		}
+		fmt.Printf("Current slot: %v\n", currentSlot)
+
+		fmt.Printf("Fetching the parent hash for the next slot from the relayer\n")
+		slotParentHash, err := util.GetCurrentBlock(fmt.Sprintf("http://%s/eth/v1/relay/get_parent_hash_for_slot", constants.MevRelayerUrl), currentSlot.Uint64()+1)
+		if err != nil {
+			fmt.Printf("Error fetching parent hash for slot relayer: %v", err)
+			continue
+		}
+		fmt.Println("Parent hash: ", slotParentHash)
+
+		fmt.Printf("Fetching the fee recipient of the proposer the next slot from the relayer\n")
+		proposerFeeRecipient, err := util.GetCurrentProposerFeeRecipient(fmt.Sprintf("http://%s/eth/v1/relay/get_proposer_for_slot", constants.MevRelayerUrl), currentSlot.Uint64()+1)
+		if err != nil {
+			fmt.Printf("Error fetching parent hash for slot relayer: %v", err)
+			continue
+		}
+		fmt.Println("proposer fee recipient: ", proposerFeeRecipient)
 
 		fmt.Println("2. Creating private key")
 		privateKey, err := crypto.HexToECDSA("cc877501b98c7171da436b1f1b6081941495795af765b5341e32558acd34e722")
@@ -179,29 +187,29 @@ func main() {
 			AmountOutMinimum:  big.NewInt(0),
 			SqrtPriceLimitX96: big.NewInt(0),
 		})
-		//transactor.Nonce = big.NewInt(0).Add(big.NewInt(int64(nonce)), big.NewInt(1))
-		//swapTx2, err := uniV3SwapRouter.ExactInputSingle(transactor, contracts.ISwapRouterExactInputSingleParams{
-		//	TokenIn:           constants.WethGoerliAddress,
-		//	TokenOut:          constants.WBtcGoerliAddress,
-		//	Fee:               big.NewInt(3000),
-		//	Recipient:         sender,
-		//	Deadline:          big.NewInt(time.Now().Unix() + 1200),
-		//	AmountIn:          big.NewInt(1),
-		//	AmountOutMinimum:  big.NewInt(0),
-		//	SqrtPriceLimitX96: big.NewInt(0),
-		//})
-		//
-		//transactor.Nonce = big.NewInt(0).Add(big.NewInt(int64(nonce)), big.NewInt(2))
-		//swapTx3, err := uniV3SwapRouter.ExactInputSingle(transactor, contracts.ISwapRouterExactInputSingleParams{
-		//	TokenIn:           constants.WethGoerliAddress,
-		//	TokenOut:          constants.DaiAddress,
-		//	Fee:               big.NewInt(3000),
-		//	Recipient:         sender,
-		//	Deadline:          big.NewInt(time.Now().Unix() + 1200),
-		//	AmountIn:          big.NewInt(1),
-		//	AmountOutMinimum:  big.NewInt(0),
-		//	SqrtPriceLimitX96: big.NewInt(0),
-		//})
+		transactor.Nonce = big.NewInt(0).Add(big.NewInt(int64(nonce)), big.NewInt(1))
+		swapTx2, err := uniV3SwapRouter.ExactInputSingle(transactor, contracts.ISwapRouterExactInputSingleParams{
+			TokenIn:           constants.WethGoerliAddress,
+			TokenOut:          constants.WBtcGoerliAddress,
+			Fee:               big.NewInt(3000),
+			Recipient:         sender,
+			Deadline:          big.NewInt(time.Now().Unix() + 1200),
+			AmountIn:          big.NewInt(10000),
+			AmountOutMinimum:  big.NewInt(0),
+			SqrtPriceLimitX96: big.NewInt(0),
+		})
+
+		transactor.Nonce = big.NewInt(0).Add(big.NewInt(int64(nonce)), big.NewInt(2))
+		swapTx3, err := uniV3SwapRouter.ExactInputSingle(transactor, contracts.ISwapRouterExactInputSingleParams{
+			TokenIn:           constants.WethGoerliAddress,
+			TokenOut:          constants.DaiAddress,
+			Fee:               big.NewInt(3000),
+			Recipient:         sender,
+			Deadline:          big.NewInt(time.Now().Unix() + 1200),
+			AmountIn:          big.NewInt(10000),
+			AmountOutMinimum:  big.NewInt(0),
+			SqrtPriceLimitX96: big.NewInt(0),
+		})
 
 		if err != nil {
 			log.Fatal(err)
@@ -211,127 +219,127 @@ func main() {
 
 		time.Sleep(12 * time.Second)
 
-		//fmt.Printf("Created Eth/WBtc tx!!\n", swapTx2.Hash())
-		//fmt.Printf("Created Eth/Dai tx!!\n", swapTx3.Hash())
+		fmt.Printf("Created Eth/WBtc tx!!\n", swapTx2.Hash())
+		fmt.Printf("Created Eth/Dai tx!!\n", swapTx3.Hash())
 
-		//// Replace with the recipient's address
-		//fmt.Println("5. Creating relayer instance")
-		//proposerFeeRecipientAddress := common.HexToAddress(proposerFeeRecipient)
-		//
-		//proposerFeeRecipientBalance, err := util.GetBalance(client, proposerFeeRecipientAddress.String())
-		//if err != nil {
-		//	fmt.Printf("Error fetching balance for proposer fee recipient: %v", err)
-		//	continue
-		//}
-		//fmt.Printf("proposer fee recipient address balance: %v\n", proposerFeeRecipientBalance)
-		//
-		//fmt.Printf("Nonce: %d\n", nonce)
-		//fmt.Printf("Eth/Usdc Swap tx nonce is: %d\n", swapTx1.Nonce())
-		//fmt.Printf("Eth/WBtc Swap tx nonce is: %d\n", swapTx2.Nonce())
-		//fmt.Printf("Eth/Dai Swap tx nonce is: %d\n", swapTx3.Nonce())
-		//
-		//// Set the gas price and gas limit
-		//fmt.Println("7. Setting gas price and gas limit")
-		//gasPrice, err := client.SuggestGasPrice(context.Background())
-		//if err != nil {
-		//	log.Fatal(err)
-		//	continue
-		//}
-		//
-		//gasLimit := uint64(21000) // You may need to adjust this depending on the type of transaction
-		//
-		//// Specify the amount to send (in Wei)
-		//value := big.NewInt(100000000000000000) // 0.1 ETH
-		//
-		//// Create a new Ethereum transaction
-		//fmt.Printf("8. Creating the txs")
-		////tobTx := types.NewTransaction(nonce, toAddress, value, gasLimit, gasPrice, nil)
-		//proposerPayout := types.NewTransaction(swapTx3.Nonce()+1, proposerFeeRecipientAddress, value, gasLimit, gasPrice, nil)
-		//
-		//fmt.Println("9. get local chain id")
-		//localChainId, err := client.ChainID(context.Background())
-		//if err != nil {
-		//	log.Fatal(err)
-		//	continue
-		//}
-		//fmt.Printf("ChainID: %d\n", localChainId)
-		//
-		//// Sign the transaction with the sender's private key
-		//signedProposerPayout, err := types.SignTx(proposerPayout, types.NewCancunSigner(localChainId), privateKey)
-		//if err != nil {
-		//	log.Fatal(err)
-		//	continue
-		//}
-		//binaryTx1, err := swapTx1.MarshalBinary()
-		//if err != nil {
-		//	log.Fatal(err)
-		//	continue
-		//}
-		//binaryTx2, err := swapTx2.MarshalBinary()
-		//if err != nil {
-		//	log.Fatal(err)
-		//	continue
-		//}
-		//binaryTx3, err := swapTx3.MarshalBinary()
-		//if err != nil {
-		//	log.Fatal(err)
-		//	continue
-		//}
-		//binaryTx4, err := signedProposerPayout.MarshalBinary()
-		//if err != nil {
-		//	log.Fatal(err)
-		//	continue
-		//}
-		//
-		//tobTxs := new(types2.TobTxsSubmitRequest)
-		//tobTxs.TobTxs = utilbellatrix.ExecutionPayloadTransactions{
-		//	Transactions: []bellatrix.Transaction{binaryTx1, binaryTx2, binaryTx3, binaryTx4},
-		//}
-		//tobTxs.Slot = currentSlot.Uint64() + 1
-		//tobTxs.ParentHash = slotParentHash
-		//
-		//jsonTobTxs, err := tobTxs.MarshalJSON()
-		//if err != nil {
-		//	log.Fatal(err)
-		//	continue
-		//}
-		//
-		//fmt.Println("10. Sending transactions to mev relayer")
-		//// Create a new HTTP POST request with the JSON data as the request body
-		//req, err := http.NewRequest("POST", fmt.Sprintf("http://%s/relay/v1/builder/tob_txs", constants.MevRelayerUrl), bytes.NewBuffer(jsonTobTxs))
-		//if err != nil {
-		//	fmt.Println("Error creating request:", err)
-		//	continue
-		//}
-		//req.Header.Set("Content-Type", "application/json")
-		//
-		//httpClient := &http.Client{}
-		//
-		//// Send the request
-		//resp, err := httpClient.Do(req)
-		//if err != nil {
-		//	fmt.Println("Error sending request:", err)
-		//	continue
-		//}
-		//defer resp.Body.Close()
-		//
-		//// Check the response status code
-		//if resp.StatusCode == http.StatusOK {
-		//	fmt.Printf("Tob Txs successfully submitted for slot: %d and parentHash: %s\n", tobTxs.Slot, tobTxs.ParentHash)
-		//	fmt.Printf("First ToB tx hash is %s\n", swapTx1.Hash().String())
-		//	fmt.Printf("Second ToB tx hash is %s\n", swapTx2.Hash().String())
-		//	fmt.Printf("Third ToB tx hash is %s\n", swapTx3.Hash().String())
-		//	fmt.Printf("Relayer payout hash is %s\n", signedProposerPayout.Hash().String())
-		//} else {
-		//	fmt.Println("Request failed with status code:", resp.StatusCode)
-		//	// read the body
-		//	body, err := io.ReadAll(resp.Body)
-		//	if err != nil {
-		//		fmt.Println("Error reading response body:", err)
-		//		continue
-		//	}
-		//	fmt.Printf("Request failed with error message: %s\n", string(body))
-		//
-		//}
+		// Replace with the recipient's address
+		fmt.Println("5. Creating relayer instance")
+		proposerFeeRecipientAddress := common.HexToAddress(proposerFeeRecipient)
+
+		proposerFeeRecipientBalance, err := util.GetBalance(client, proposerFeeRecipientAddress.String())
+		if err != nil {
+			fmt.Printf("Error fetching balance for proposer fee recipient: %v", err)
+			continue
+		}
+		fmt.Printf("proposer fee recipient address balance: %v\n", proposerFeeRecipientBalance)
+
+		fmt.Printf("Nonce: %d\n", nonce)
+		fmt.Printf("Eth/Usdc Swap tx nonce is: %d\n", swapTx1.Nonce())
+		fmt.Printf("Eth/WBtc Swap tx nonce is: %d\n", swapTx2.Nonce())
+		fmt.Printf("Eth/Dai Swap tx nonce is: %d\n", swapTx3.Nonce())
+
+		// Set the gas price and gas limit
+		fmt.Println("7. Setting gas price and gas limit")
+		gasPrice, err := client.SuggestGasPrice(context.Background())
+		if err != nil {
+			log.Fatal(err)
+			continue
+		}
+
+		gasLimit := uint64(21000) // You may need to adjust this depending on the type of transaction
+
+		// Specify the amount to send (in Wei)
+		value := big.NewInt(100000000000000000) // 0.1 ETH
+
+		// Create a new Ethereum transaction
+		fmt.Printf("8. Creating the txs")
+		//tobTx := types.NewTransaction(nonce, toAddress, value, gasLimit, gasPrice, nil)
+		proposerPayout := types.NewTransaction(swapTx3.Nonce()+1, proposerFeeRecipientAddress, value, gasLimit, gasPrice, nil)
+
+		fmt.Println("9. get local chain id")
+		localChainId, err := client.ChainID(context.Background())
+		if err != nil {
+			log.Fatal(err)
+			continue
+		}
+		fmt.Printf("ChainID: %d\n", localChainId)
+
+		// Sign the transaction with the sender's private key
+		signedProposerPayout, err := types.SignTx(proposerPayout, types.NewCancunSigner(localChainId), privateKey)
+		if err != nil {
+			log.Fatal(err)
+			continue
+		}
+		binaryTx1, err := swapTx1.MarshalBinary()
+		if err != nil {
+			log.Fatal(err)
+			continue
+		}
+		binaryTx2, err := swapTx2.MarshalBinary()
+		if err != nil {
+			log.Fatal(err)
+			continue
+		}
+		binaryTx3, err := swapTx3.MarshalBinary()
+		if err != nil {
+			log.Fatal(err)
+			continue
+		}
+		binaryTx4, err := signedProposerPayout.MarshalBinary()
+		if err != nil {
+			log.Fatal(err)
+			continue
+		}
+
+		tobTxs := new(types2.TobTxsSubmitRequest)
+		tobTxs.TobTxs = utilbellatrix.ExecutionPayloadTransactions{
+			Transactions: []bellatrix.Transaction{binaryTx1, binaryTx2, binaryTx3, binaryTx4},
+		}
+		tobTxs.Slot = currentSlot.Uint64() + 1
+		tobTxs.ParentHash = slotParentHash
+
+		jsonTobTxs, err := tobTxs.MarshalJSON()
+		if err != nil {
+			log.Fatal(err)
+			continue
+		}
+
+		fmt.Println("10. Sending transactions to mev relayer")
+		// Create a new HTTP POST request with the JSON data as the request body
+		req, err := http.NewRequest("POST", fmt.Sprintf("http://%s/relay/v1/builder/tob_txs", constants.MevRelayerUrl), bytes.NewBuffer(jsonTobTxs))
+		if err != nil {
+			fmt.Println("Error creating request:", err)
+			continue
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		httpClient := &http.Client{}
+
+		// Send the request
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			fmt.Println("Error sending request:", err)
+			continue
+		}
+		defer resp.Body.Close()
+
+		// Check the response status code
+		if resp.StatusCode == http.StatusOK {
+			fmt.Printf("Tob Txs successfully submitted for slot: %d and parentHash: %s\n", tobTxs.Slot, tobTxs.ParentHash)
+			fmt.Printf("First ToB tx hash is %s\n", swapTx1.Hash().String())
+			fmt.Printf("Second ToB tx hash is %s\n", swapTx2.Hash().String())
+			fmt.Printf("Third ToB tx hash is %s\n", swapTx3.Hash().String())
+			fmt.Printf("Relayer payout hash is %s\n", signedProposerPayout.Hash().String())
+		} else {
+			fmt.Println("Request failed with status code:", resp.StatusCode)
+			// read the body
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				fmt.Println("Error reading response body:", err)
+				continue
+			}
+			fmt.Printf("Request failed with error message: %s\n", string(body))
+
+		}
 	}
 }
