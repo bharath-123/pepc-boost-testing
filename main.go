@@ -188,6 +188,10 @@ func main() {
 			AmountOutMinimum:  big.NewInt(0),
 			SqrtPriceLimitX96: big.NewInt(0),
 		})
+		if err != nil {
+			log.Fatal(err)
+			continue
+		}
 		fmt.Printf("Created Eth/Usdc tx!!\n", swapTx1.Hash())
 
 		transactor.Nonce = big.NewInt(0).Add(big.NewInt(int64(nonce)), big.NewInt(1))
@@ -201,13 +205,17 @@ func main() {
 			AmountOutMinimum:  big.NewInt(0),
 			SqrtPriceLimitX96: big.NewInt(0),
 		})
+		if err != nil {
+			log.Fatal(err)
+			continue
+		}
 		fmt.Printf("Created Eth/WBtc tx!!\n", swapTx2.Hash())
 
 		transactor.Nonce = big.NewInt(0).Add(big.NewInt(int64(nonce)), big.NewInt(2))
 		fmt.Printf("Creating ETH/DAI swap tx.....\n")
 		swapTx3, err := uniV3SwapRouter.ExactInputSingle(transactor, contracts.ISwapRouterExactInputSingleParams{
 			TokenIn:           constants.WethGoerliAddress,
-			TokenOut:          constants.DaiAddress,
+			TokenOut:          constants.DaiGoerliAddress,
 			Fee:               big.NewInt(3000),
 			Recipient:         sender,
 			Deadline:          big.NewInt(time.Now().Unix() + 1200),
@@ -215,12 +223,12 @@ func main() {
 			AmountOutMinimum:  big.NewInt(0),
 			SqrtPriceLimitX96: big.NewInt(0),
 		})
-		fmt.Printf("Created Eth/Dai tx!!\n", swapTx3.Hash())
-
 		if err != nil {
 			log.Fatal(err)
 			continue
 		}
+
+		fmt.Printf("Created Eth/Dai tx!!\n", swapTx3.Hash())
 
 		time.Sleep(12 * time.Second)
 
