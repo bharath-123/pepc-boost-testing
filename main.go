@@ -94,6 +94,8 @@ func main() {
 	for {
 		// sleep for 1 slot
 
+		time.Sleep(12 * time.Second)
+
 		fmt.Printf("Fetching the current slot from the relayer\n")
 		currentSlot, err := util.GetCurrentSlot(fmt.Sprintf("http://%s/eth/v1/relay/get_head_slot", constants.MevRelayerUrl))
 		if err != nil {
@@ -174,9 +176,8 @@ func main() {
 		transactor.NoSend = false
 		transactor.Nonce = big.NewInt(int64(nonce))
 
-		fmt.Printf("Creating swap tx\n")
 		transactor.NoSend = true
-		fmt.Printf("Creating swap tx.....\n")
+		fmt.Printf("Creating Eth/USDC swap tx.....\n")
 		swapTx1, err := uniV3SwapRouter.ExactInputSingle(transactor, contracts.ISwapRouterExactInputSingleParams{
 			TokenIn:           constants.WethGoerliAddress,
 			TokenOut:          constants.UsdcAddress,
@@ -187,6 +188,8 @@ func main() {
 			AmountOutMinimum:  big.NewInt(0),
 			SqrtPriceLimitX96: big.NewInt(0),
 		})
+		fmt.Printf("Created Eth/Usdc tx!!\n", swapTx1.Hash())
+
 		transactor.Nonce = big.NewInt(0).Add(big.NewInt(int64(nonce)), big.NewInt(1))
 		swapTx2, err := uniV3SwapRouter.ExactInputSingle(transactor, contracts.ISwapRouterExactInputSingleParams{
 			TokenIn:           constants.WethGoerliAddress,
@@ -198,8 +201,10 @@ func main() {
 			AmountOutMinimum:  big.NewInt(0),
 			SqrtPriceLimitX96: big.NewInt(0),
 		})
+		fmt.Printf("Created Eth/WBtc tx!!\n", swapTx2.Hash())
 
 		transactor.Nonce = big.NewInt(0).Add(big.NewInt(int64(nonce)), big.NewInt(2))
+		fmt.Printf("Creating ETH/DAI swap tx.....\n")
 		swapTx3, err := uniV3SwapRouter.ExactInputSingle(transactor, contracts.ISwapRouterExactInputSingleParams{
 			TokenIn:           constants.WethGoerliAddress,
 			TokenOut:          constants.DaiAddress,
@@ -210,17 +215,14 @@ func main() {
 			AmountOutMinimum:  big.NewInt(0),
 			SqrtPriceLimitX96: big.NewInt(0),
 		})
+		fmt.Printf("Created Eth/Dai tx!!\n", swapTx3.Hash())
 
 		if err != nil {
 			log.Fatal(err)
 			continue
 		}
-		fmt.Printf("Created Eth/Usdc tx!!\n", swapTx1.Hash())
 
 		time.Sleep(12 * time.Second)
-
-		fmt.Printf("Created Eth/WBtc tx!!\n", swapTx2.Hash())
-		fmt.Printf("Created Eth/Dai tx!!\n", swapTx3.Hash())
 
 		// Replace with the recipient's address
 		fmt.Println("5. Creating relayer instance")
